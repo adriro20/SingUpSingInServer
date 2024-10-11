@@ -7,7 +7,7 @@ package controler;
 
 /**
  *
- * @author 2dam
+ * @author Adrian Rocha
  */
 public interface Closable {
     public void close();

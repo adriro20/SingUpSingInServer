@@ -9,7 +9,7 @@ import clases.Signable;
 
 /**
  *
- * @author 2dam
+ * @author Adrian Rocha
  */
 public class SignableFactory {
     public static Signable getSignable(){

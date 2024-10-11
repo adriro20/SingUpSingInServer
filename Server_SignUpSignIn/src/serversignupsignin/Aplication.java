@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.Worker;
 
 /**
  *
@@ -33,12 +34,13 @@ public class Aplication {
         int maxConn, conns = 0;
         Message message = new Message();
         Request enumReq;
+        Worker workerThread;
         
         ServerSocket server = null;
         Socket socket = null;
         ObjectInputStream entrada = null;
         ObjectOutputStream salida = null;
-        List<Thread> threads = new ArrayList<>();
+        List<Worker> threads = new ArrayList<>();
         
         try {
             PUERTO = getConnInfo();
@@ -58,11 +60,19 @@ public class Aplication {
                         
                         if (enumReq == Request.CLOSE) {
                             if (conns > 0) {
-                                
+                                for(Worker w : threads) {
+                                    try {
+                                        w.join();
+                                    } catch (InterruptedException ex) {
+                                        Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                }
                             } 
                             finalizarServidor = true;
+                            salida.writeObject(message);
                         } else {
-                            
+                            workerThread = new Worker(message);
+                            threads.add(workerThread);
                         }
                         conns++;
                     }
