@@ -30,7 +30,7 @@ public abstract class DbAccess implements Signable{
     private ResultSet rs;
     
     /**insert para meter los datos que nos pasan en la tabla ves_parther*/
-    private final String INSERT_PARTHER = "insert into ves_parther(company_id, name, mobile, email, street, city) values(?,?,?,?,?,?)";
+    private final String INSERT_PARTHER = "insert into ves_parther(company_id, name, zip, email, street, city) values(?,?,?,?,?,?)";
     /**insert para meter los datos que nos pasan en la tabla ves_users*/
     private final String INSERT_USERS = "insert into ves_users(company_id, parther_id, login, password) values(?,?,?,?)";
     /**select para comprobar que el email y contraseña existen y coincidenr*/
@@ -125,7 +125,7 @@ public abstract class DbAccess implements Signable{
                     } else {
                         stmt = con.prepareStatement(INSERT_PARTHER);
                         stmt.setString(1, mensaje.getUser().getName());
-                        stmt.setString(2, mensaje.getUser().getMobile());
+                        stmt.setString(2, mensaje.getUser().getZip());
                         stmt.setString(3, mensaje.getUser().getEmail());
                         stmt.setString(4, mensaje.getUser().getStreet());
                         stmt.setString(4, mensaje.getUser().getCity());
