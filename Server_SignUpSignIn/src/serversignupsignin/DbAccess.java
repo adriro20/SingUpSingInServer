@@ -21,7 +21,7 @@ import java.sql.SQLException;
  *Gestiona la base de datos cogiendo e insertando datos en ella 
  * @author 2dam
  */
-public abstract class DbAccess implements Signable{
+public class DbAccess implements Signable{
     
     Message mensaje;
     
