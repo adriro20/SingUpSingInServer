@@ -12,7 +12,7 @@ package controler;
 public class ClosableFactory {
     Closable close;
     public Closable getClosable() {
-        close = new ConnectionPool();
+        close = (Closable) new ConnectionPool();
         return close;
     }
 }
