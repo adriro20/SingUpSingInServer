@@ -29,11 +29,12 @@ public class TestMain {
             user.setZip("48610");
             user.setActive(true);
             user.setPassword("ErlantZ9");
-            
+            Message mensaje = new Message();
+            mensaje.setUser(user);
             serversignupsignin.DbAccess db = new DbAccess();
            // db.signIn(user);
             try {
-                db.signUp(user);
+                db.signUp(mensaje);
             } catch (UserExitsException ex) {
                 Logger.getLogger(TestMain.class.getName()).log(Level.SEVERE, null, ex);
             }
