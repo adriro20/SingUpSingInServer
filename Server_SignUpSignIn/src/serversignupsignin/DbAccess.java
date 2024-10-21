@@ -32,15 +32,15 @@ public class DbAccess implements Signable{
     private ResultSet rs;
     private ConnectionPool connectionPool;
             
-    /**insert para meter los datos que nos pasan en la tabla ves_parther*/
+    /**insert para meter los datos que nos pasan en la tabla res_partner*/
     private final String INSERT_PARTNER = "insert into res_partner (company_id, name, email, street, city, zip) values (1, ?, ?, ?, ?, ?)";
-    /**insert para meter los datos que nos pasan en la tabla ves_users*/
+    /**insert para meter los datos que nos pasan en la tabla res_users*/
     private final String INSERT_USERS = "insert into res_users (company_id, partner_id, login, password, active, notification_type) values (1, ?, ?, ?, ?, 'email')";
     /**select para comprobar que el email y contraseña existen y coincidenr*/
     private final String SELECT_SINGIN = "select * from res_users where login=? and passsword=?";
     /**select para saber si el email ya existe a la hora de registrar*/
     private final String SELECT_EMAIL = "select * from res_partner where email=?";
-    /**select para coger el pather_id para el insert de ves_users*/
+    /**select para coger el partner id para el insert de res_users*/
     private final String SELECT_PARTNER_ID = "select id from res_partner order by id desc limit 1";
     
     
@@ -86,14 +86,14 @@ public class DbAccess implements Signable{
      * @throws NoConnectionsAvailableException 
      */
     @Override
-    public User signIn(User user) throws InternalServerErrorException, LogInDataException{
+    public User signIn(Message mensaje) throws InternalServerErrorException, LogInDataException{
         this.getConnection();
         
         try {
             
             stmt = con.prepareStatement(SELECT_SINGIN);
-            stmt.setString(1, user.getEmail());
-            stmt.setString(2, user.getPassword());
+            stmt.setString(1, mensaje.getUser().getEmail());
+            stmt.setString(2, mensaje.getUser().getPassword());
             ResultSet rs = stmt.executeQuery();
             releaseConnection();
             
@@ -106,7 +106,7 @@ public class DbAccess implements Signable{
             
         }
  
-         return user;
+         return mensaje.getUser();
         
    
     }
@@ -119,21 +119,21 @@ public class DbAccess implements Signable{
      * @throws NoConnectionsAvailableException 
      */
     @Override
-    public User signUp(User user) throws InternalServerErrorException, UserExitsException{
+    public User signUp(Message mensaje) throws InternalServerErrorException, UserExitsException{
         this.getConnection();
 		try {
                     stmt = con.prepareStatement(SELECT_EMAIL);
-                    stmt.setString(1, user.getEmail());
+                    stmt.setString(1, mensaje.getUser().getEmail());
                     ResultSet login = stmt.executeQuery();
                     if(login.next()){
                         throw new UserExitsException();
                     } else {
                         stmt = con.prepareStatement(INSERT_PARTNER);
-                        stmt.setString(1, user.getName());
-                        stmt.setString(2, user.getEmail());
-                        stmt.setString(3, user.getStreet());
-                        stmt.setString(4, user.getCity());
-                        stmt.setString(5, user.getZip());
+                        stmt.setString(1, mensaje.getUser().getName());
+                        stmt.setString(2, mensaje.getUser().getEmail());
+                        stmt.setString(3, mensaje.getUser().getStreet());
+                        stmt.setString(4, mensaje.getUser().getCity());
+                        stmt.setString(5, mensaje.getUser().getZip());
                         stmt.executeUpdate();
                         
                         stmt = con.prepareStatement(SELECT_PARTNER_ID);
@@ -144,9 +144,9 @@ public class DbAccess implements Signable{
                         
                         stmt = con.prepareStatement(INSERT_USERS);
                         stmt.setInt(1, partnerId);
-                        stmt.setString(2, user.getEmail());
-                        stmt.setString(3, user.getPassword());
-                        stmt.setBoolean(4, user.isActive());
+                        stmt.setString(2, mensaje.getUser().getEmail());
+                        stmt.setString(3, mensaje.getUser().getPassword());
+                        stmt.setBoolean(4, mensaje.getUser().isActive());
                         stmt.executeUpdate();
                         
                         releaseConnection();
@@ -157,7 +157,7 @@ public class DbAccess implements Signable{
 			e.printStackTrace();
 		}
 		
-                return user;
+                return mensaje.getUser();
     }
     
 }
