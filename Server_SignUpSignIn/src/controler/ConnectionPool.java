@@ -58,7 +58,7 @@ public class ConnectionPool implements AutoCloseable {
     }
 
     /**
-     * Constructor de la clase {@code ConnectionPool} que inicializa con los parámetros de conexión.
+     * Constructor de la clase  que inicializa con los parámetros de conexión.
      * 
      * @param databaseUrl URL de la base de datos.
      * @param userName Nombre de usuario de la base de datos.

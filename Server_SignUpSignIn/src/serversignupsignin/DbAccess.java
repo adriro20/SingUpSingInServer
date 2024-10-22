@@ -22,14 +22,21 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *Gestiona la base de datos cogiendo e insertando datos en ella 
- * @author 2dam
+ *Gestiona la base de datos cogiendo e insertando datos en ella, haciendo
+ * tanto el metodo SingIn como SIngUp.
+ * Maneja las conexiones, realiza consultas SQL y gestiona excepciones relacionadas
+ * con las operaciones de la base de datos
+ * @author Erlantz Rey
  */
 public class DbAccess implements Signable{
-     
+    
+    /**Objeto utilizado para establecer una conexión con la base de datos.*/
     private Connection con;
+    /**Objeto} utilizado para preparar y ejecutar consultas SQL con parametros.*/
     private PreparedStatement stmt;
+    /**Objeto que almacena el resultado de una consulta SQL.*/
     private ResultSet rs;
+    /**Pool de conexiones que administra múltiples conexiones reutilizables a la base de datos.*/
     private ConnectionPool connectionPool;
             
     /**insert para meter los datos que nos pasan en la tabla res_partner*/
@@ -37,15 +44,15 @@ public class DbAccess implements Signable{
     /**insert para meter los datos que nos pasan en la tabla res_users*/
     private final String INSERT_USERS = "insert into res_users (company_id, partner_id, login, password, active, notification_type) values (1, ?, ?, ?, ?, 'email')";
     /**select para comprobar que el email y contraseña existen y coincidenr*/
-    private final String SELECT_SINGIN = "select * from res_users where login=? and passsword=?";
+    private final String SELECT_SINGIN = "select company_id, partner_id, login, password, active, notification_type from res_users where login=? and passsword=?";
     /**select para saber si el email ya existe a la hora de registrar*/
-    private final String SELECT_EMAIL = "select * from res_partner where email=?";
+    private final String SELECT_EMAIL = "select email from res_partner where email=?";
     /**select para coger el partner id para el insert de res_users*/
     private final String SELECT_PARTNER_ID = "select id from res_partner order by id desc limit 1";
     
     
     /**
-     * abrir la conexion con la base de datos
+     * abrir la conexion con la base de datos utilizando el pool
      */
     private void getConnection() {
         ConnectionPool pool = new ConnectionPool("jdbc:postgresql://192.168.20.231:5432/odoodes", "odoo", "abcd*1234");
@@ -90,7 +97,7 @@ public class DbAccess implements Signable{
         this.getConnection();
         
         try {
-            
+            //el select que recoge los datos si el email y contraseña coincide 
             stmt = con.prepareStatement(SELECT_SINGIN);
             stmt.setString(1, mensaje.getUser().getEmail());
             stmt.setString(2, mensaje.getUser().getPassword());
@@ -107,8 +114,6 @@ public class DbAccess implements Signable{
         }
  
          return mensaje.getUser();
-        
-   
     }
     
     /**
@@ -128,6 +133,7 @@ public class DbAccess implements Signable{
                     if(login.next()){
                         throw new UserExitsException();
                     } else {
+                        //insertar el usuario la parte de partner 
                         stmt = con.prepareStatement(INSERT_PARTNER);
                         stmt.setString(1, mensaje.getUser().getName());
                         stmt.setString(2, mensaje.getUser().getEmail());
@@ -136,12 +142,14 @@ public class DbAccess implements Signable{
                         stmt.setString(5, mensaje.getUser().getZip());
                         stmt.executeUpdate();
                         
+                        //sirve para saber el nuevo id del partner insertado antes 
                         stmt = con.prepareStatement(SELECT_PARTNER_ID);
                         ResultSet partner = stmt.executeQuery();
                         int partnerId =0;
                         if (partner.next()) 
                              partnerId = partner.getInt("id");
                         
+                        //insertar la otra parte del usuario
                         stmt = con.prepareStatement(INSERT_USERS);
                         stmt.setInt(1, partnerId);
                         stmt.setString(2, mensaje.getUser().getEmail());
