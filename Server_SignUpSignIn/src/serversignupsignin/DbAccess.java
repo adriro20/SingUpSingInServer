@@ -9,6 +9,7 @@ import clases.Message;
 import clases.Signable;
 import clases.User;
 import controler.ConnectionPool;
+import controler.ConnectionPoolSingleton;
 import excepciones.InternalServerErrorException;
 import excepciones.LogInDataException;
 import excepciones.NoConnectionsAvailableException;
@@ -29,7 +30,6 @@ import java.util.logging.Logger;
  * @author Erlantz Rey
  */
 public class DbAccess implements Signable{
-    
     /**Objeto utilizado para establecer una conexión con la base de datos.*/
     private Connection con;
     /**Objeto} utilizado para preparar y ejecutar consultas SQL con parametros.*/
@@ -54,17 +54,18 @@ public class DbAccess implements Signable{
     /**
      * abrir la conexion con la base de datos utilizando el pool
      */
-    private void getConnection() {
-        ConnectionPool pool = new ConnectionPool("jdbc:postgresql://192.168.20.231:5432/odoodes", "odoo", "abcd*1234");
+    private void getConnection() throws NoConnectionsAvailableException, SQLException {
+        ConnectionPool pool = ConnectionPoolSingleton.getPool();
        this.connectionPool=pool;
         try {
             this.con = connectionPool.getConnection();
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
+            throw new SQLException(ex);
         }
     }
 
-    /**
+     /**
      * Este metodo cierra la conexion con la base de datos
      *
      * @throws SQLException
@@ -75,7 +76,7 @@ public class DbAccess implements Signable{
                 stmt.close();
             }
             if (con != null) {
-                con.close();
+                connectionPool.returnConnection(con);
             }
 
         } catch (SQLException e) {
@@ -93,10 +94,10 @@ public class DbAccess implements Signable{
      * @throws NoConnectionsAvailableException 
      */
     @Override
-    public User signIn(Message mensaje) throws InternalServerErrorException, LogInDataException{
-        this.getConnection();
-        
+    public User signIn(Message mensaje) throws InternalServerErrorException, LogInDataException, NoConnectionsAvailableException{
         try {
+            this.getConnection();
+            
             //el select que recoge los datos si el email y contraseña coincide 
             stmt = con.prepareStatement(SELECT_SINGIN);
             stmt.setString(1, mensaje.getUser().getEmail());
@@ -106,10 +107,10 @@ public class DbAccess implements Signable{
             
             if(!rs.next()){
                 throw new LogInDataException();
-                
             }
-          
-        }catch(Exception e){
+        } catch (SQLException ex) {
+            Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
+        } catch(Exception e){
             
         }
  
@@ -124,48 +125,47 @@ public class DbAccess implements Signable{
      * @throws NoConnectionsAvailableException 
      */
     @Override
-    public User signUp(Message mensaje) throws InternalServerErrorException, UserExitsException{
-        this.getConnection();
-		try {
-                    stmt = con.prepareStatement(SELECT_EMAIL);
-                    stmt.setString(1, mensaje.getUser().getEmail());
-                    ResultSet login = stmt.executeQuery();
-                    if(login.next()){
-                        throw new UserExitsException();
-                    } else {
-                        //insertar el usuario la parte de partner 
-                        stmt = con.prepareStatement(INSERT_PARTNER);
-                        stmt.setString(1, mensaje.getUser().getName());
-                        stmt.setString(2, mensaje.getUser().getEmail());
-                        stmt.setString(3, mensaje.getUser().getStreet());
-                        stmt.setString(4, mensaje.getUser().getCity());
-                        stmt.setString(5, mensaje.getUser().getZip());
-                        stmt.executeUpdate();
-                        
-                        //sirve para saber el nuevo id del partner insertado antes 
-                        stmt = con.prepareStatement(SELECT_PARTNER_ID);
-                        ResultSet partner = stmt.executeQuery();
-                        int partnerId =0;
-                        if (partner.next()) 
-                             partnerId = partner.getInt("id");
-                        
-                        //insertar la otra parte del usuario
-                        stmt = con.prepareStatement(INSERT_USERS);
-                        stmt.setInt(1, partnerId);
-                        stmt.setString(2, mensaje.getUser().getEmail());
-                        stmt.setString(3, mensaje.getUser().getPassword());
-                        stmt.setBoolean(4, mensaje.getUser().isActive());
-                        stmt.executeUpdate();
-                        
-                        releaseConnection();
-                    }
-                    
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-                return mensaje.getUser();
+    public User signUp(Message mensaje) throws InternalServerErrorException, UserExitsException, NoConnectionsAvailableException{
+        try {
+            this.getConnection();
+            stmt = con.prepareStatement(SELECT_EMAIL);
+            stmt.setString(1, mensaje.getUser().getEmail());
+            ResultSet login = stmt.executeQuery();
+            if(login.next()){
+                throw new UserExitsException();
+            } else {
+                stmt = con.prepareStatement(INSERT_PARTNER);
+                stmt.setString(1, mensaje.getUser().getName());
+                stmt.setString(2, mensaje.getUser().getEmail());
+                stmt.setString(3, mensaje.getUser().getStreet());
+                stmt.setString(4, mensaje.getUser().getCity());
+                stmt.setString(5, mensaje.getUser().getZip());
+                stmt.executeUpdate();
+
+                stmt = con.prepareStatement(SELECT_PARTNER_ID);
+                ResultSet partner = stmt.executeQuery();
+                int partnerId =0;
+                if (partner.next()) 
+                     partnerId = partner.getInt("id");
+
+                stmt = con.prepareStatement(INSERT_USERS);
+                stmt.setInt(1, partnerId);
+                stmt.setString(2, mensaje.getUser().getEmail());
+                stmt.setString(3, mensaje.getUser().getPassword());
+                stmt.setBoolean(4, mensaje.getUser().isActive());
+                stmt.executeUpdate();
+
+                releaseConnection();
+            }
+
+        } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        } catch(Exception e){
+            
+        }
+
+        return mensaje.getUser();
     }
     
 }

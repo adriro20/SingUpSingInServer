@@ -16,7 +16,7 @@ public class ConnectionPoolSingleton {
         
     }
     
-    public static ConnectionPool getPool(){
+    public synchronized static ConnectionPool getPool(){
         if (pool == null) {
             pool = new ConnectionPool();
         }

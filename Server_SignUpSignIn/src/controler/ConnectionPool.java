@@ -5,6 +5,7 @@
  */
 package controler;
 
+import excepciones.NoConnectionsAvailableException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -22,7 +23,7 @@ import java.util.LinkedList;
  * Esta clase implementa la interfaz {@code AutoCloseable}, lo que permite cerrar
  * todas las conexiones activas cuando el pool se cierra.
  * 
- * @author Adrian Rocha
+ * @author Erlantz Rey, Adrian Rocha
  */
 public class ConnectionPool implements AutoCloseable {
 
@@ -36,7 +37,7 @@ public class ConnectionPool implements AutoCloseable {
     private String password;
 
     /** Número máximo de conexiones permitidas en el pool. */
-    private int maxPoolSize = getMaxConnections();
+    private int maxPoolSize;
 
     /** Número de conexiones actuales activas en el pool. */
     private int connNum = 0;
@@ -52,23 +53,12 @@ public class ConnectionPool implements AutoCloseable {
 
     /**
      * Constructor vacío de la clase {@code ConnectionPool}.
-     * No inicializa los parámetros de conexión.
+     * Inicializa los parametros de conexion.
      */
     public ConnectionPool() {
+        this.setConnections();
     }
 
-    /**
-     * Constructor de la clase  que inicializa con los parámetros de conexión.
-     * 
-     * @param databaseUrl URL de la base de datos.
-     * @param userName Nombre de usuario de la base de datos.
-     * @param password Contraseña del usuario de la base de datos.
-     */
-    public ConnectionPool(String databaseUrl, String userName, String password) {
-        this.databaseUrl = databaseUrl;
-        this.userName = userName;
-        this.password = password;
-    }
 
     /**
      * Cierra todas las conexiones del pool. Cierra tanto las conexiones libres como las ocupadas.
@@ -103,13 +93,14 @@ public class ConnectionPool implements AutoCloseable {
      * el límite, se lanza una excepción.
      * 
      * @return Una conexión disponible.
-     * @throws SQLException Si no hay conexiones disponibles o hay un error al crear la conexión.
+     * @throws excepciones.NoConnectionsAvailableException
+     * @throws java.sql.SQLException
      */
-    public synchronized Connection getConnection() throws SQLException {
+    public synchronized Connection getConnection() throws NoConnectionsAvailableException, SQLException {
         Connection conn = null;
 
         if (isFull()) {
-            throw new SQLException("Conexiones completas");
+            throw new NoConnectionsAvailableException();
         }
 
         conn = getConnectionFromPool();
@@ -228,9 +219,11 @@ public class ConnectionPool implements AutoCloseable {
      * 
      * @return El número máximo de conexiones configurado.
      */
-    private int getMaxConnections() {
-        ResourceBundle fichConf = ResourceBundle.getBundle("model.totalConnections");
-        String conn = fichConf.getString("TCON");
-        return Integer.valueOf(conn);
+    private void setConnections() {
+        ResourceBundle fichConf = ResourceBundle.getBundle("model.connections");
+        this.maxPoolSize = Integer.valueOf(fichConf.getString("TCON"));
+        this.databaseUrl = fichConf.getString("URL");
+        this.userName = fichConf.getString("USER");
+        this.password = fichConf.getString("PWD");
     }
 }

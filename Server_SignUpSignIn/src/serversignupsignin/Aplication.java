@@ -7,6 +7,7 @@ package serversignupsignin;
 
 import clases.Message;
 import clases.Request;
+import excepciones.NoConnectionsAvailableException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -24,61 +25,54 @@ import model.Worker;
  * @author Adrian Rocha
  */
 public class Aplication {
-
+    private static int conns = 0;
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        int PUERTO;
-        boolean finalizarServidor = false;
-        int maxConn, conns = 0;
-        Message message = new Message();
-        Request enumReq;
-        Worker workerThread;
-        
-        ServerSocket server = null;
-        Socket socket = null;
-        ObjectInputStream entrada = null;
-        ObjectOutputStream salida = null;
-        List<Worker> threads = new ArrayList<>();
-        
         try {
+            int PUERTO;
+            boolean finalizarServidor = false;
+            int maxConn;
+            
+            Message message = new Message();
+            Worker workerThread;
+            
+            ServerSocket server = null;
+            Socket socket = null;
+            ObjectInputStream entrada = null;
+            ObjectOutputStream salida = null;
+            List<Worker> threads = new ArrayList<>();
+            
             PUERTO = getConnInfo();
             server = new ServerSocket(PUERTO);
+            salida = new ObjectOutputStream(socket.getOutputStream());
+            entrada = new ObjectInputStream(socket.getInputStream());
                     
             while (!finalizarServidor) {
                 try {
                     socket = server.accept();
                     maxConn = getMaxConnections();
                     if (conns < maxConn) {
-                        salida = new ObjectOutputStream(socket.getOutputStream());
-                        entrada = new ObjectInputStream(socket.getInputStream());
-
                         message = (Message) entrada.readObject();
-                        
-                        enumReq = message.getRequest();
-                        
-                        if (enumReq == Request.CLOSE) {
-                            if (conns > 0) {
-                                for(Worker w : threads) {
-                                    try {
-                                        w.join();
-                                    } catch (InterruptedException ex) {
-                                        Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
-                                    }
-                                }
-                            } 
-                            finalizarServidor = true;
-                            salida.writeObject(message);
-                        } else {
-                            workerThread = new Worker(message);
-                            threads.add(workerThread);
-                        }
+
+                        workerThread = new Worker(message, socket);
+                        threads.add(workerThread);
+
                         conns++;
+                    } else {
+                        throw new NoConnectionsAvailableException();
                     }
                 } catch (IOException | ClassNotFoundException ex) {
                     Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+                    message.setRequest(Request.INTERNAL_EXCEPTION);
+                    salida.writeObject(message);
+                } catch (NoConnectionsAvailableException ex) {
+                    Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+                    message.setRequest(Request.CONNECTIONS_EXCEPTION);
+                    salida.writeObject(message);
                 }
+                
             }
         } catch (IOException ex) {
             Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
@@ -86,18 +80,22 @@ public class Aplication {
         
     }
 
-    private static int getMaxConnections() {
+    public static int getMaxConnections() {
         ResourceBundle fichConf = ResourceBundle.getBundle("model.totalConnections");
         String conn = fichConf.getString("TCON");
         
         return Integer.valueOf(conn);
     }
 
-    private static int getConnInfo() {
+    public static int getConnInfo() {
         ResourceBundle fichConf = ResourceBundle.getBundle("model.infoServer");
         String port = fichConf.getString("PORT");
         
         return Integer.valueOf(port);
+    }
+    
+    public static void releaseConn() {
+        Aplication.conns -= 1;
     }
     
 }

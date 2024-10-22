@@ -9,6 +9,7 @@ import clases.Message;
 import clases.User;
 import excepciones.InternalServerErrorException;
 import excepciones.LogInDataException;
+import excepciones.NoConnectionsAvailableException;
 import excepciones.UserExitsException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,7 +24,7 @@ public class TestMain {
         
             User user = new User();
             user.setName("erlantz rey");
-            user.setEmail("erlantz@gmail.com");
+            user.setEmail("erlantzzzzz@gmail.com");
             user.setCity("bilbao");
             user.setStreet("calle");
             user.setZip("48610");
@@ -37,7 +38,9 @@ public class TestMain {
                 db.signUp(mensaje);
             } catch (UserExitsException ex) {
                 Logger.getLogger(TestMain.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            } catch (NoConnectionsAvailableException ex) {
+            Logger.getLogger(TestMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
             
         
     } 
