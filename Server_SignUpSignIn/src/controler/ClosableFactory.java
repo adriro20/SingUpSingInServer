@@ -6,11 +6,17 @@
 package controler;
 
 /**
- *
+ *Clase  que proporciona un método para obtener una instancia
+ * de un objeto que implementa la interfaz Closable. 
  * @author Adrian Rocha
  */
 public class ClosableFactory {
     Closable close;
+    
+    /***
+     * Método que devuelve un objeto que implementa la interfaz Closable
+     * @return 
+     */
     public Closable getClosable() {
         close = (Closable) new ConnectionPool();
         return close;
