@@ -7,6 +7,8 @@ package serversignupsignin;
 
 import clases.Message;
 import clases.Request;
+import clases.Signable;
+import controler.SignableFactory;
 import excepciones.NoConnectionsAvailableException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -26,10 +28,16 @@ import model.Worker;
  */
 public class Aplication {
     private static int conns = 0;
+    private static List<Worker> threads;
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        ServerSocket server = null;
+        Socket socket = null;
+        ObjectOutputStream salida = null;
+        Signable db = SignableFactory.getSignable();
+        threads = new ArrayList<>();
         try {
             int PUERTO;
             boolean finalizarServidor = false;
@@ -38,44 +46,59 @@ public class Aplication {
             Message message = new Message();
             Worker workerThread;
             
-            ServerSocket server = null;
-            Socket socket = null;
-            ObjectInputStream entrada = null;
-            ObjectOutputStream salida = null;
-            List<Worker> threads = new ArrayList<>();
             
             PUERTO = getConnInfo();
             server = new ServerSocket(PUERTO);
-            salida = new ObjectOutputStream(socket.getOutputStream());
-            entrada = new ObjectInputStream(socket.getInputStream());
+            
                     
             while (!finalizarServidor) {
                 try {
                     socket = server.accept();
                     maxConn = getMaxConnections();
+                    salida = new ObjectOutputStream(socket.getOutputStream());
                     if (conns < maxConn) {
-                        message = (Message) entrada.readObject();
-
-                        workerThread = new Worker(message, socket);
-                        threads.add(workerThread);
-
+                        workerThread = new Worker(socket, db);
                         conns++;
+                        workerThread.setWorkerid(conns);
+                        workerThread.start();
+                        threads.add(workerThread);
                     } else {
                         throw new NoConnectionsAvailableException();
                     }
-                } catch (IOException | ClassNotFoundException ex) {
+                } catch (IOException ex) {
                     Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
                     message.setRequest(Request.INTERNAL_EXCEPTION);
-                    salida.writeObject(message);
                 } catch (NoConnectionsAvailableException ex) {
                     Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
                     message.setRequest(Request.CONNECTIONS_EXCEPTION);
                     salida.writeObject(message);
+                }finally {
+                    try {
+                        if (socket != null) {
+                            socket.close();
+                        }
+                        if (salida != null) {
+                            salida.close();
+                        }
+                    } catch (IOException ex) {
+                        Logger.getLogger(Worker.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
                 
             }
         } catch (IOException ex) {
             Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (server != null) {
+                try {
+                    for (Worker thread : threads) {
+                        thread.join();
+                    }
+                    server.close();
+                } catch (IOException | InterruptedException ex) {
+                    Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+                } 
+            }
         }
         
     }
@@ -94,7 +117,12 @@ public class Aplication {
         return Integer.valueOf(port);
     }
     
-    public static void releaseConn() {
+    public synchronized static void releaseConn(int id) {
+        for (Worker thread : threads) {
+            if (thread.getWorkerid() == id) {
+                threads.remove(thread);
+            }
+        }
         Aplication.conns -= 1;
     }
     

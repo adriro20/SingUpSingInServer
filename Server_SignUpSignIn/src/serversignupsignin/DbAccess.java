@@ -54,7 +54,7 @@ public class DbAccess implements Signable{
     /**
      * abrir la conexion con la base de datos utilizando el pool
      */
-    private void getConnection() throws NoConnectionsAvailableException, SQLException {
+    private synchronized void getConnection() throws NoConnectionsAvailableException, SQLException {
         ConnectionPool pool = ConnectionPoolSingleton.getPool();
        this.connectionPool=pool;
         try {
@@ -70,7 +70,7 @@ public class DbAccess implements Signable{
      *
      * @throws SQLException
      */
-    private void releaseConnection() throws SQLException {
+    private synchronized void releaseConnection() throws SQLException {
         try {
             if (stmt != null) {
                 stmt.close();
@@ -94,7 +94,7 @@ public class DbAccess implements Signable{
      * @throws NoConnectionsAvailableException 
      */
     @Override
-    public User signIn(Message mensaje) throws InternalServerErrorException, LogInDataException, NoConnectionsAvailableException{
+    public synchronized User signIn(Message mensaje) throws InternalServerErrorException, LogInDataException, NoConnectionsAvailableException{
         try {
             this.getConnection();
             
@@ -125,7 +125,7 @@ public class DbAccess implements Signable{
      * @throws NoConnectionsAvailableException 
      */
     @Override
-    public User signUp(Message mensaje) throws InternalServerErrorException, UserExitsException, NoConnectionsAvailableException{
+    public synchronized User signUp(Message mensaje) throws InternalServerErrorException, UserExitsException, NoConnectionsAvailableException{
         try {
             this.getConnection();
             stmt = con.prepareStatement(SELECT_EMAIL);
