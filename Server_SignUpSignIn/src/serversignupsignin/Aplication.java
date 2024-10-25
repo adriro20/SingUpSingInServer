@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.Reader;
 import model.Worker;
 
 /**
@@ -28,7 +29,8 @@ import model.Worker;
  */
 public class Aplication {
     private static int conns = 0;
-    private static List<Worker> threads;
+    private static boolean finalizarServidor = false;
+    
     /**
      * @param args the command line arguments
      */
@@ -36,12 +38,17 @@ public class Aplication {
         ServerSocket server = null;
         Socket socket = null;
         ObjectOutputStream salida = null;
+        ObjectInputStream entrada = null;
+        
+        final Logger log = Logger.getLogger(Aplication.class.getName());
         Signable db = SignableFactory.getSignable();
-        threads = new ArrayList<>();
+        
         try {
             int PUERTO;
-            boolean finalizarServidor = false;
             int maxConn;
+            
+            Reader readerThread = new Reader();
+            readerThread.start();
             
             Message message = new Message();
             Worker workerThread;
@@ -50,61 +57,50 @@ public class Aplication {
             PUERTO = getConnInfo();
             server = new ServerSocket(PUERTO);
             
-                    
             while (!finalizarServidor) {
                 try {
                     socket = server.accept();
                     maxConn = getMaxConnections();
                     salida = new ObjectOutputStream(socket.getOutputStream());
+                    entrada = new ObjectInputStream(socket.getInputStream());
                     if (conns < maxConn) {
-                        workerThread = new Worker(socket, db);
+                        workerThread = new Worker(socket, db, salida, entrada);
                         conns++;
-                        workerThread.setWorkerid(conns);
                         workerThread.start();
-                        threads.add(workerThread);
                     } else {
                         throw new NoConnectionsAvailableException();
                     }
                 } catch (IOException ex) {
-                    Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+                    log.log(Level.SEVERE, null, ex);
                     message.setRequest(Request.INTERNAL_EXCEPTION);
                 } catch (NoConnectionsAvailableException ex) {
-                    Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+                    log.log(Level.SEVERE, null, ex);
                     message.setRequest(Request.CONNECTIONS_EXCEPTION);
                     salida.writeObject(message);
-                }finally {
-                    try {
-                        if (socket != null) {
-                            socket.close();
-                        }
-                        if (salida != null) {
-                            salida.close();
-                        }
-                    } catch (IOException ex) {
-                        Logger.getLogger(Worker.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                
+                }                
             }
         } catch (IOException ex) {
-            Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
+            log.log(Level.SEVERE, null, ex);
         } finally {
-            if (server != null) {
-                try {
-                    for (Worker thread : threads) {
-                        thread.join();
-                    }
+            try {
+                if (socket != null) {
+                    socket.close();
+                }
+                if (salida != null) {
+                    salida.close();
+                }
+                if (server != null) {
                     server.close();
-                } catch (IOException | InterruptedException ex) {
-                    Logger.getLogger(Aplication.class.getName()).log(Level.SEVERE, null, ex);
-                } 
+                }
+            } catch (IOException ex) {
+                log.log(Level.SEVERE, null, ex);
             }
         }
         
     }
 
     public static int getMaxConnections() {
-        ResourceBundle fichConf = ResourceBundle.getBundle("model.totalConnections");
+        ResourceBundle fichConf = ResourceBundle.getBundle("model.connections");
         String conn = fichConf.getString("TCON");
         
         return Integer.valueOf(conn);
@@ -117,13 +113,12 @@ public class Aplication {
         return Integer.valueOf(port);
     }
     
-    public synchronized static void releaseConn(int id) {
-        for (Worker thread : threads) {
-            if (thread.getWorkerid() == id) {
-                threads.remove(thread);
-            }
-        }
+    public synchronized static void releaseConn() {
         Aplication.conns -= 1;
     }
+    
+    public synchronized static void closeServer() {
+        Aplication.finalizarServidor = true;
+    }    
     
 }

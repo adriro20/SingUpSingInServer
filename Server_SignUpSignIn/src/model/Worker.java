@@ -29,48 +29,44 @@ public class Worker extends Thread{
     private Message message;
     private Signable db;
     private Socket socket = null;
-    private int id;
+    
+    private final Logger log = Logger.getLogger(Worker.class.getName());
     
     private ObjectOutputStream salida = null;
     private ObjectInputStream entrada = null;
     
-    public Worker(Socket socket, Signable db) {
+    public Worker(Socket socket, Signable db, ObjectOutputStream salida, 
+            ObjectInputStream entrada) {
         this.socket = socket;
         this.message = message;
         this.db = db;
+        this.entrada = entrada;
+        this.salida = salida;
+        
     }
 
-    public void setWorkerid(int id) {
-        this.id = id;
-    }
-    
-    public int getWorkerid() {
-        return id;
-    }
-        
     public void run() {
         try {
-            this.entrada = new ObjectInputStream(socket.getInputStream());
-            this.salida = new ObjectOutputStream(socket.getOutputStream());
-            
             message = (Message) entrada.readObject();
-            
+            System.out.println(message.getRequest());
             if (message.getRequest() == Request.SING_UP_REQUEST) {
                 message.setUser(db.signUp(message));
-                Aplication.releaseConn(id);
                 salida.writeObject(message);
             } else if (message.getRequest() == Request.SING_IN_REQUEST) {
                 message.setUser(db.signIn(message));
-                Aplication.releaseConn(id);
                 salida.writeObject(message);
             }
+            Aplication.releaseConn();
         } catch (LogInDataException ex) {
             sendMessage(message, salida, ex, Request.LOG_IN_EXCEPTION);
         } catch (UserExitsException ex) {
             sendMessage(message, salida, ex, Request.USER_EXISTS_EXCEPTION);
         } catch (NoConnectionsAvailableException ex) {
             sendMessage(message, salida, ex, Request.CONNECTIONS_EXCEPTION);
-        } catch (ClassNotFoundException | InternalServerErrorException | IOException ex) {
+        } catch (ClassNotFoundException | InternalServerErrorException | 
+                IOException ex) {
+            sendMessage(message, salida, ex, Request.INTERNAL_EXCEPTION);
+        } catch (Exception ex) {
             sendMessage(message, salida, ex, Request.INTERNAL_EXCEPTION);
         } finally {
             try {
@@ -84,18 +80,19 @@ public class Worker extends Thread{
                     salida.close();
                 }
             } catch (IOException ex) {
-                Logger.getLogger(Worker.class.getName()).log(Level.SEVERE, null, ex);
+                log.log(Level.SEVERE, null, ex);
             }
         }
     }
 
-    private void sendMessage(Message message, ObjectOutputStream salida, Exception ex, Request req) {
-        Logger.getLogger(Worker.class.getName()).log(Level.SEVERE, null, ex);
-            message.setRequest(req);
-            try {
-                salida.writeObject(message);
-            } catch (IOException ex1) {
-                Logger.getLogger(Worker.class.getName()).log(Level.SEVERE, null, ex1);
-            }
+    private void sendMessage(Message message, ObjectOutputStream salida, 
+            Exception ex, Request req) {
+        log.log(Level.SEVERE, null, ex);
+        message.setRequest(req);
+        try {
+            salida.writeObject(message);
+        } catch (IOException ex1) {
+            log.log(Level.SEVERE, null, ex1);
+        }
     }
 }

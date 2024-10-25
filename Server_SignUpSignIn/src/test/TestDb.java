@@ -24,7 +24,7 @@ public class TestDb {
     public static void main(String[] args) throws InternalServerErrorException {
         User user = new User();
         user.setName("erlantz rey");
-        user.setEmail("erlantzzzzz@gmail.com");
+        user.setEmail("juleeeeeeeeeeeeeeeen@gmail.com");
         user.setCity("bilbao");
         user.setStreet("calle");
         user.setZip("48610");

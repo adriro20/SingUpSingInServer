@@ -44,7 +44,9 @@ public class DbAccess implements Signable{
     /**insert para meter los datos que nos pasan en la tabla res_users*/
     private final String INSERT_USERS = "insert into res_users (company_id, partner_id, login, password, active, notification_type) values (1, ?, ?, ?, ?, 'email')";
     /**select para comprobar que el email y contraseña existen y coincidenr*/
-    private final String SELECT_SINGIN = "select company_id, partner_id, login, password, active, notification_type from res_users where login=? and passsword=?";
+    private final String SELECT_SINGIN_RES_USER = "select company_id, partner_id, login, password, active, notification_type from res_users where login=? and passsword=?";
+    /**Select recoger el resto de datos del usuario en el inicio de sesion*/
+    private final String SELECT_SINGIN_RES_PARTNER = "select company_id, partner_id, login, password, active, notification_type from res_users where login=? and passsword=?";
     /**select para saber si el email ya existe a la hora de registrar*/
     private final String SELECT_EMAIL = "select email from res_partner where email=?";
     /**select para coger el partner id para el insert de res_users*/
@@ -79,9 +81,9 @@ public class DbAccess implements Signable{
                 connectionPool.returnConnection(con);
             }
 
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
+            throw new SQLException(ex);
         }
     }
     
@@ -94,24 +96,44 @@ public class DbAccess implements Signable{
      * @throws NoConnectionsAvailableException 
      */
     @Override
-    public synchronized User signIn(Message mensaje) throws InternalServerErrorException, LogInDataException, NoConnectionsAvailableException{
+    public synchronized User signIn(Message mensaje) throws 
+            InternalServerErrorException, LogInDataException, 
+            NoConnectionsAvailableException{
+        int partner;
         try {
             this.getConnection();
             
-            //el select que recoge los datos si el email y contraseña coincide 
-            stmt = con.prepareStatement(SELECT_SINGIN);
+            //El select que recoge los datos si el email y contraseña coincide 
+            stmt = con.prepareStatement(SELECT_SINGIN_RES_USER);
             stmt.setString(1, mensaje.getUser().getEmail());
             stmt.setString(2, mensaje.getUser().getPassword());
             ResultSet rs = stmt.executeQuery();
-            releaseConnection();
             
             if(!rs.next()){
                 throw new LogInDataException();
+            } else {
+                partner = rs.getInt("partner_id");
+                //mensaje.getUser().setName();
+                mensaje.getUser().setEmail(rs.getString("login"));
+                //mensaje.getUser().setCity();
+                mensaje.getUser().setCompany_id(rs.getInt("company_id"));
+                mensaje.getUser().setActive(rs.getBoolean("active"));
+                mensaje.getUser().setPassword(rs.getString("password"));
+                //mensaje.getUser().setStreet();
+                //mensaje.getUser().setZip();
             }
+            
+            stmt = con.prepareStatement(SELECT_SINGIN_RES_USER);
+            stmt.setString(1, mensaje.getUser().getEmail());
+            stmt.setString(2, mensaje.getUser().getPassword());
+            rs = stmt.executeQuery();
+            releaseConnection();
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
-        } catch(Exception e){
-            
+            throw new InternalServerErrorException();
+        } catch(Exception ex){
+            Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
+            throw new InternalServerErrorException();
         }
  
          return mensaje.getUser();
