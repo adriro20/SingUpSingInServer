@@ -13,6 +13,7 @@ import excepciones.InternalServerErrorException;
 import excepciones.LogInDataException;
 import excepciones.NoConnectionsAvailableException;
 import excepciones.UserExitsException;
+import excepciones.UserNotActiveException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -57,6 +58,8 @@ public class Worker extends Thread{
                 salida.writeObject(message);
             }
             Aplication.releaseConn();
+        } catch (UserNotActiveException ex) {
+            sendMessage(message, salida, ex, Request.USER_NOT_ACTIVE_EXCEPTION);
         } catch (LogInDataException ex) {
             sendMessage(message, salida, ex, Request.LOG_IN_EXCEPTION);
         } catch (UserExitsException ex) {

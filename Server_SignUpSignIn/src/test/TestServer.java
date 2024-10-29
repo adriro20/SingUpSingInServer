@@ -12,6 +12,7 @@ import excepciones.InternalServerErrorException;
 import excepciones.LogInDataException;
 import excepciones.NoConnectionsAvailableException;
 import excepciones.UserExitsException;
+import excepciones.UserNotActiveException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -39,15 +40,15 @@ public class TestServer {
         try {
             User user = new User();
             user.setName("erlantz rey");
-            user.setEmail("asdgvasdvasdvasgasfgvsfvg@gmail.com");
+            user.setEmail("sfdavwuitnhwiceuqwqxoewdasfh@gmail.com");
             user.setCity("bilbao");
             user.setStreet("calle");
             user.setZip("48610");
-            user.setActive(true);
+            user.setActive(false);
             user.setPassword("ErlantZ9");
             Message mensaje = new Message();
             mensaje.setUser(user);
-            mensaje.setRequest(Request.SING_UP_REQUEST);
+            mensaje.setRequest(Request.SING_IN_REQUEST);
             serversignupsignin.DbAccess db = new DbAccess();
             //Establece la conexión con el servidor con la IP y el puerto.
             socket = new Socket(ip, puerto);
@@ -67,7 +68,13 @@ public class TestServer {
                     throw new LogInDataException();
                 case CONNECTIONS_EXCEPTION:
                     throw new NoConnectionsAvailableException();
+                case USER_EXISTS_EXCEPTION:
+                    throw new UserExitsException();
+                case USER_NOT_ACTIVE_EXCEPTION:
+                    throw new UserNotActiveException();
             }
+            
+            System.out.println(mensaje.getRequest());
             //Si sucede algún otro error se lanza la excepción InternalServerErrorException.
             
         } catch (IOException ex) {
@@ -79,6 +86,10 @@ public class TestServer {
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(TestServer.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NoConnectionsAvailableException ex) {
+            Logger.getLogger(TestServer.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UserExitsException ex) {
+            Logger.getLogger(TestServer.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UserNotActiveException ex) {
             Logger.getLogger(TestServer.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {

@@ -18,12 +18,14 @@ public class Reader extends Thread{
     private Scanner sc = new Scanner(System.in);
     
     public void run(){
-        System.out.println("Para cerrar el servidor, pulse la tecla Esc");
-        
         while(!cerrar){
-            if(sc.next().equals("exit")){
-                Aplication.closeServer();
-                cerrar = true;
+            System.out.println("Para cerrar el servidor, escriba exit:");
+            if(sc.next().equalsIgnoreCase("exit")){
+                System.out.println("¿Estas seguro? SI/no");
+                if(sc.next().equalsIgnoreCase("si") || sc.next().equalsIgnoreCase("")){
+                    Aplication.closeServer();
+                    cerrar = true;
+                }
             }
         }
     }
