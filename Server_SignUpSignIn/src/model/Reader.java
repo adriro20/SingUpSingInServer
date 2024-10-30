@@ -5,6 +5,7 @@
  */
 package model;
 
+import java.net.ServerSocket;
 import java.util.Scanner;
 import serversignupsignin.Aplication;
 
@@ -16,6 +17,11 @@ public class Reader extends Thread{
     
     private boolean cerrar = false;
     private Scanner sc = new Scanner(System.in);
+    private ServerSocket server = null;
+    
+    public Reader (ServerSocket ss) {
+        this.server = ss;
+    }
     
     public void run(){
         while(!cerrar){

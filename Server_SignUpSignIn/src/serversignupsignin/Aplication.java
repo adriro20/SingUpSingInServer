@@ -8,6 +8,8 @@ package serversignupsignin;
 import clases.Message;
 import clases.Request;
 import clases.Signable;
+import controler.ConnectionPool;
+import controler.ConnectionPoolSingleton;
 import controler.SignableFactory;
 import excepciones.NoConnectionsAvailableException;
 import java.io.IOException;
@@ -30,32 +32,30 @@ import model.Worker;
 public class Aplication {
     private static int conns = 0;
     private static boolean finalizarServidor = false;
+    private static ServerSocket server = null;
+    private static Socket socket = null;
+    private static ObjectOutputStream salida = null;
+    private static ObjectInputStream entrada = null;
+    private static final Logger log = Logger.getLogger(Aplication.class.getName());
     
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        ServerSocket server = null;
-        Socket socket = null;
-        ObjectOutputStream salida = null;
-        ObjectInputStream entrada = null;
-        
-        final Logger log = Logger.getLogger(Aplication.class.getName());
         Signable db = SignableFactory.getSignable();
         
         try {
             int PUERTO;
             int maxConn;
             
-            Reader readerThread = new Reader();
-            readerThread.start();
-            
             Message message = new Message();
             Worker workerThread;
             
-            
             PUERTO = getConnInfo();
             server = new ServerSocket(PUERTO);
+            
+            Reader readerThread = new Reader(server);
+            readerThread.start();
             
             while (!finalizarServidor) {
                 try {
@@ -89,6 +89,9 @@ public class Aplication {
                 if (salida != null) {
                     salida.close();
                 }
+                if (entrada != null) {
+                    entrada.close();
+                }
                 if (server != null) {
                     server.close();
                 }
@@ -117,8 +120,29 @@ public class Aplication {
         Aplication.conns -= 1;
     }
     
-    public synchronized static void closeServer() {
+    public static void closeServer() {
+        ConnectionPool pool = ConnectionPoolSingleton.getPool();
+        pool.close();
         Aplication.finalizarServidor = true;
+        try {
+                if (socket != null) {
+                    socket.close();
+                }
+                if (salida != null) {
+                    salida.close();
+                }
+                if (entrada != null) {
+                    entrada.close();
+                }
+                if (server != null) {
+                    server.close();
+                }
+            } catch (IOException ex) {
+                log.log(Level.SEVERE, null, ex);
+            }
+        while(conns != 0) {
+        }
+        System.exit(0);
     }    
     
 }
