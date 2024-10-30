@@ -10,7 +10,7 @@ import clases.Request;
 import clases.Signable;
 import controler.ConnectionPool;
 import controler.ConnectionPoolSingleton;
-import controler.SignableFactory;
+import controler.SignableSingleton;
 import excepciones.NoConnectionsAvailableException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -42,8 +42,6 @@ public class Aplication {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Signable db = SignableFactory.getSignable();
-        
         try {
             int PUERTO;
             int maxConn;
@@ -64,7 +62,7 @@ public class Aplication {
                     salida = new ObjectOutputStream(socket.getOutputStream());
                     entrada = new ObjectInputStream(socket.getInputStream());
                     if (conns < maxConn) {
-                        workerThread = new Worker(socket, db, salida, entrada);
+                        workerThread = new Worker(socket, salida, entrada);
                         conns++;
                         workerThread.start();
                     } else {
@@ -125,24 +123,35 @@ public class Aplication {
         pool.close();
         Aplication.finalizarServidor = true;
         try {
-                if (socket != null) {
-                    socket.close();
-                }
-                if (salida != null) {
-                    salida.close();
-                }
-                if (entrada != null) {
-                    entrada.close();
-                }
-                if (server != null) {
-                    server.close();
-                }
-            } catch (IOException ex) {
-                log.log(Level.SEVERE, null, ex);
+            if (socket != null) {
+                socket.close();
             }
+            if (salida != null) {
+                salida.close();
+            }
+            if (entrada != null) {
+                entrada.close();
+            }
+            if (server != null) {
+                server.close();
+            }
+        } catch (IOException ex) {
+            log.log(Level.SEVERE, null, ex);
+        }
         while(conns != 0) {
         }
         System.exit(0);
     }    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 }

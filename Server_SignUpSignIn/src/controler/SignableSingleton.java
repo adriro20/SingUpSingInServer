@@ -12,8 +12,17 @@ import serversignupsignin.DbAccess;
  *
  * @author Adrian Rocha
  */
-public class SignableFactory {
-    public static Signable getSignable(){
-        return new DbAccess();
+public class SignableSingleton {
+    private static DbAccess db = null;
+    
+    private SignableSingleton(){
+        
+    }
+    
+    public synchronized static DbAccess getDao(){
+        if (db == null) {
+            db = new DbAccess();
+        }
+        return db;
     }
 }

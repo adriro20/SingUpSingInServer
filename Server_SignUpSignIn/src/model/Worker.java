@@ -8,7 +8,7 @@ package model;
 import clases.Message;
 import clases.Request;
 import clases.Signable;
-import controler.SignableFactory;
+import controler.SignableSingleton;
 import excepciones.InternalServerErrorException;
 import excepciones.LogInDataException;
 import excepciones.NoConnectionsAvailableException;
@@ -36,11 +36,11 @@ public class Worker extends Thread{
     private ObjectOutputStream salida = null;
     private ObjectInputStream entrada = null;
     
-    public Worker(Socket socket, Signable db, ObjectOutputStream salida, 
+    public Worker(Socket socket, ObjectOutputStream salida, 
             ObjectInputStream entrada) {
         this.socket = socket;
         this.message = message;
-        this.db = db;
+        this.db = SignableSingleton.getDao();
         this.entrada = entrada;
         this.salida = salida;
         
