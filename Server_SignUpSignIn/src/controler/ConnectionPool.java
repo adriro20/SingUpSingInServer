@@ -128,6 +128,7 @@ public class ConnectionPool implements AutoCloseable {
             throw new SQLException("La conexión ya ha sido devuelta o no pertenece a este pool.");
         }
         freePool.push(conn);
+        connNum--;
     }
 
     /**

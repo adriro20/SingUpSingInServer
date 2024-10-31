@@ -7,18 +7,14 @@ package serversignupsignin;
 
 import clases.Message;
 import clases.Request;
-import clases.Signable;
 import controler.ConnectionPool;
 import controler.ConnectionPoolSingleton;
-import controler.SignableSingleton;
 import excepciones.NoConnectionsAvailableException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,11 +50,11 @@ public class Aplication {
             
             Reader readerThread = new Reader(server);
             readerThread.start();
+            maxConn = getMaxConnections();
             
             while (!finalizarServidor) {
                 try {
                     socket = server.accept();
-                    maxConn = getMaxConnections();
                     salida = new ObjectOutputStream(socket.getOutputStream());
                     entrada = new ObjectInputStream(socket.getInputStream());
                     if (conns < maxConn) {

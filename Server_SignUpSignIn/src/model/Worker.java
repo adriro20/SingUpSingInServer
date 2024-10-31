@@ -49,7 +49,6 @@ public class Worker extends Thread{
     public void run() {
         try {
             message = (Message) entrada.readObject();
-            System.out.println(message.getRequest());
             if (message.getRequest() == Request.SING_UP_REQUEST) {
                 message.setUser(db.signUp(message));
                 salida.writeObject(message);
@@ -57,7 +56,6 @@ public class Worker extends Thread{
                 message.setUser(db.signIn(message));
                 salida.writeObject(message);
             }
-            Aplication.releaseConn();
         } catch (UserNotActiveException ex) {
             sendMessage(message, salida, ex, Request.USER_NOT_ACTIVE_EXCEPTION);
         } catch (LogInDataException ex) {
@@ -72,6 +70,7 @@ public class Worker extends Thread{
         } catch (Exception ex) {
             sendMessage(message, salida, ex, Request.INTERNAL_EXCEPTION);
         } finally {
+            Aplication.releaseConn();
             try {
                 if (socket != null) {
                     socket.close();
