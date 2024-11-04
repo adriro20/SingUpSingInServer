@@ -6,7 +6,10 @@
 package controler;
 
 /**
- *
+ * Interfaz que define el método para cerrar recursos.
+ * 
+ * Contiene el metodo close
+ * 
  * @author Adrian Rocha
  */
 public interface Closable {

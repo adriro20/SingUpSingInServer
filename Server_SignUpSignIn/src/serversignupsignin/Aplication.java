@@ -7,18 +7,14 @@ package serversignupsignin;
 
 import clases.Message;
 import clases.Request;
-import clases.Signable;
 import controler.ConnectionPool;
 import controler.ConnectionPoolSingleton;
-import controler.SignableSingleton;
 import excepciones.NoConnectionsAvailableException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,26 +66,19 @@ public class Aplication {
                     }
                 } catch (IOException ex) {
                     log.log(Level.SEVERE, null, ex);
-                    message.setRequest(Request.INTERNAL_EXCEPTION);
                 } catch (NoConnectionsAvailableException ex) {
                     log.log(Level.SEVERE, null, ex);
                     message.setRequest(Request.CONNECTIONS_EXCEPTION);
                     salida.writeObject(message);
-                }                
+                } finally {
+                    
+                }
             }
         } catch (IOException ex) {
             log.log(Level.SEVERE, null, ex);
         } finally {
+            closeServerConnection();
             try {
-                if (socket != null) {
-                    socket.close();
-                }
-                if (salida != null) {
-                    salida.close();
-                }
-                if (entrada != null) {
-                    entrada.close();
-                }
                 if (server != null) {
                     server.close();
                 }
@@ -118,7 +107,23 @@ public class Aplication {
         Aplication.conns -= 1;
     }
     
-    public static void closeServer() {
+    public synchronized static void closeServerConnection() { 
+        try {
+            if (socket != null) {
+                socket.close();
+            }
+            if (entrada != null) {
+                entrada.close();
+            }
+            if (salida != null) {
+                salida.close();
+            }
+        } catch (IOException ex) {
+            log.log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public synchronized static void closeServer() {
         ConnectionPool pool = ConnectionPoolSingleton.getPool();
         pool.close();
         Aplication.finalizarServidor = true;

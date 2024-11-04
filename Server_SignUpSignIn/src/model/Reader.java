@@ -11,7 +11,7 @@ import serversignupsignin.Aplication;
 
 /**
  *
- * @author 2dam
+ * @author Julen Hidalgo, Adrian Rocha
  */
 public class Reader extends Thread{
     

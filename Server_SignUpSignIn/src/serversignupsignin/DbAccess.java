@@ -8,6 +8,7 @@ package serversignupsignin;
 import clases.Message;
 import clases.Signable;
 import clases.User;
+import controler.Closable;
 import controler.ConnectionPool;
 import controler.ConnectionPoolSingleton;
 import excepciones.InternalServerErrorException;
@@ -38,8 +39,7 @@ public class DbAccess implements Signable{
     /**Objeto que almacena el resultado de una consulta SQL.*/
     private ResultSet rs;
     /**Pool de conexiones que administra múltiples conexiones reutilizables a la base de datos.*/
-    private ConnectionPool connectionPool;
-            
+    private Closable connectionPool;
     /**insert para meter los datos que nos pasan en la tabla res_partner*/
     private final String INSERT_PARTNER = "insert into res_partner (company_id, name, email, street, city, zip) values (1, ?, ?, ?, ?, ?)";
     /**insert para meter los datos que nos pasan en la tabla res_users*/
@@ -58,10 +58,10 @@ public class DbAccess implements Signable{
      * abrir la conexion con la base de datos utilizando el pool
      */
     private synchronized void getConnection() throws InternalServerErrorException, NoConnectionsAvailableException {
-        ConnectionPool pool = ConnectionPoolSingleton.getPool();
-       this.connectionPool=pool;
+        Closable pool = ConnectionPoolSingleton.getPool();
+        this.connectionPool = pool;
         try {
-            this.con = connectionPool.getConnection();
+            this.con = ((ConnectionPool) connectionPool).getConnection();
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
             throw new InternalServerErrorException();
@@ -79,7 +79,7 @@ public class DbAccess implements Signable{
                 stmt.close();
             }
             if (con != null) {
-                connectionPool.returnConnection(con);
+                ((ConnectionPool) connectionPool).returnConnection(con);
             }
 
         } catch (SQLException ex) {
