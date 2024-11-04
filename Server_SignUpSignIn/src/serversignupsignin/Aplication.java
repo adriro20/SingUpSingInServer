@@ -50,11 +50,11 @@ public class Aplication {
             
             Reader readerThread = new Reader(server);
             readerThread.start();
+            maxConn = getMaxConnections();
             
             while (!finalizarServidor) {
                 try {
                     socket = server.accept();
-                    maxConn = getMaxConnections();
                     salida = new ObjectOutputStream(socket.getOutputStream());
                     entrada = new ObjectInputStream(socket.getInputStream());
                     if (conns < maxConn) {

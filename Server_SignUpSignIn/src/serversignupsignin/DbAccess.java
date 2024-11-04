@@ -17,7 +17,6 @@ import excepciones.NoConnectionsAvailableException;
 import excepciones.UserExitsException;
 import excepciones.UserNotActiveException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -125,11 +124,12 @@ public class DbAccess implements Signable{
                     throw new UserNotActiveException();
                 }
             }
-            releaseConnection();
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
             throw new InternalServerErrorException();
-        } 
+        } finally {
+            releaseConnection();
+        }
         return mensaje.getUser();
     }
     
@@ -173,13 +173,13 @@ public class DbAccess implements Signable{
                 stmt.setString(3, mensaje.getUser().getPassword());
                 stmt.setBoolean(4, mensaje.getUser().isActive());
                 stmt.executeUpdate();
-
-                releaseConnection();
             }
 
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
             throw new InternalServerErrorException();
+        } finally {
+            releaseConnection();
         }
 
         return mensaje.getUser();
