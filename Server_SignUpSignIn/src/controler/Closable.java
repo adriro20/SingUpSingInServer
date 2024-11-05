@@ -13,5 +13,8 @@ package controler;
  * @author Adrian Rocha
  */
 public interface Closable {
+    /**
+     * Método para cerrar recursos.
+     */
     public void close();
 }

@@ -19,7 +19,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import serversignupsignin.DbAccess;
+import controler.DbAccess;
 
 /**
  *
@@ -49,7 +49,7 @@ public class TestServer {
             Message mensaje = new Message();
             mensaje.setUser(user);
             mensaje.setRequest(Request.SING_IN_REQUEST);
-            serversignupsignin.DbAccess db = new DbAccess();
+            controler.DbAccess db = new DbAccess();
             //Establece la conexión con el servidor con la IP y el puerto.
             socket = new Socket(ip, puerto);
             //Inicializa los flujos de entrada y salida para enviar y recoger datos.

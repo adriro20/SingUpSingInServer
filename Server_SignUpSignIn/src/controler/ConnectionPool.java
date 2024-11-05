@@ -25,7 +25,7 @@ import java.util.LinkedList;
  * 
  * @author Erlantz Rey, Adrian Rocha
  */
-public class ConnectionPool implements AutoCloseable {
+public class ConnectionPool implements Closable {
 
     /** URL de la base de datos para establecer la conexión. */
     private String databaseUrl;
@@ -93,8 +93,9 @@ public class ConnectionPool implements AutoCloseable {
      * el límite, se lanza una excepción.
      * 
      * @return Una conexión disponible.
-     * @throws excepciones.NoConnectionsAvailableException
-     * @throws java.sql.SQLException
+     * 
+     * @throws NoConnectionsAvailableException
+     * @throws SQLException
      */
     public synchronized Connection getConnection() throws NoConnectionsAvailableException, SQLException {
         Connection conn = null;
@@ -118,6 +119,7 @@ public class ConnectionPool implements AutoCloseable {
      * Devuelve una conexión al pool, marcándola como disponible para ser reutilizada.
      * 
      * @param conn La conexión a devolver.
+     * 
      * @throws SQLException Si la conexión no pertenece al pool o ya ha sido devuelta.
      */
     public synchronized void returnConnection(Connection conn) throws SQLException {
@@ -144,6 +146,7 @@ public class ConnectionPool implements AutoCloseable {
      * Crea una nueva conexión y la agrega al pool de conexiones ocupadas.
      * 
      * @return La nueva conexión creada.
+     * 
      * @throws SQLException Si ocurre un error al crear la conexión.
      */
     private Connection createNewConnectionForPool() throws SQLException {
@@ -171,6 +174,7 @@ public class ConnectionPool implements AutoCloseable {
      * Crea una nueva conexión a la base de datos utilizando los parámetros de conexión.
      * 
      * @return Una nueva conexión a la base de datos.
+     * 
      * @throws SQLException Si ocurre un error al crear la conexión.
      */
     private Connection createNewConnection() throws SQLException {
@@ -182,7 +186,9 @@ public class ConnectionPool implements AutoCloseable {
      * Si la conexión no es válida, se cierra y se reemplaza por una nueva.
      * 
      * @param conn La conexión a verificar.
+     * 
      * @return La conexión disponible o una nueva conexión si la anterior no era válida.
+     * 
      * @throws SQLException Si ocurre un error al verificar o crear la conexión.
      */
     private Connection makeAvailable(Connection conn) throws SQLException {
@@ -204,6 +210,7 @@ public class ConnectionPool implements AutoCloseable {
      * Verifica si una conexión es válida ejecutando una consulta de prueba.
      * 
      * @param conn La conexión a verificar.
+     * 
      * @return {@code true} si la conexión es válida, {@code false} en caso contrario.
      */
     private boolean isConnectionAvailable(Connection conn) {
@@ -216,9 +223,8 @@ public class ConnectionPool implements AutoCloseable {
     }
 
     /**
-     * Obtiene el número máximo de conexiones permitidas desde un archivo de configuración.
-     * 
-     * @return El número máximo de conexiones configurado.
+     * Configura las conexiones de la base de datos cargando los valores de configuración
+     * desde un archivo de propiedades.
      */
     private void setConnections() {
         ResourceBundle fichConf = ResourceBundle.getBundle("model.connections");

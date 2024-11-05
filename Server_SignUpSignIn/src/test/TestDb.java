@@ -11,10 +11,11 @@ import clases.User;
 import excepciones.InternalServerErrorException;
 import excepciones.LogInDataException;
 import excepciones.NoConnectionsAvailableException;
+import excepciones.ServerClosedException;
 import excepciones.UserExitsException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import serversignupsignin.DbAccess;
+import controler.DbAccess;
 
 /**
  *
@@ -30,16 +31,15 @@ public class TestDb {
         user.setZip("48610");
         user.setActive(true);
         user.setPassword("ErlantZ9");
-        Message mensaje = new Message();
-        mensaje.setUser(user);
-        mensaje.setRequest(Request.SING_UP_REQUEST);
-        serversignupsignin.DbAccess db = new DbAccess();
-       // db.signIn(user);
+        controler.DbAccess db = new DbAccess();
         try {
-            db.signUp(mensaje);
+            // db.signIn(user);
+            db.signUp(user);
         } catch (UserExitsException ex) {
             Logger.getLogger(TestDb.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NoConnectionsAvailableException ex) {
+            Logger.getLogger(TestDb.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ServerClosedException ex) {
             Logger.getLogger(TestDb.class.getName()).log(Level.SEVERE, null, ex);
         }
     } 

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package serversignupsignin;
+package controler;
 
 import clases.Message;
 import clases.Signable;
@@ -14,6 +14,7 @@ import controler.ConnectionPoolSingleton;
 import excepciones.InternalServerErrorException;
 import excepciones.LogInDataException;
 import excepciones.NoConnectionsAvailableException;
+import excepciones.ServerClosedException;
 import excepciones.UserExitsException;
 import excepciones.UserNotActiveException;
 import java.sql.Connection;
@@ -55,6 +56,9 @@ public class DbAccess implements Signable{
     
     /**
      * abrir la conexion con la base de datos utilizando el pool
+     * 
+     * @throws InternalServerErrorException
+     * @throws NoConnectionsAvailableException
      */
     private synchronized void getConnection() throws InternalServerErrorException, NoConnectionsAvailableException {
         Closable pool = ConnectionPoolSingleton.getPool();
@@ -70,7 +74,7 @@ public class DbAccess implements Signable{
      /**
      * Este metodo cierra la conexion con la base de datos
      *
-     * @throws SQLException
+     * @throws InternalServerErrorException
      */
     private synchronized void releaseConnection() throws InternalServerErrorException {
         try {
@@ -90,75 +94,80 @@ public class DbAccess implements Signable{
     /**
      * sirve para iniciar sesion para eso comprueba que los datos que 
      * le dan (message) estan en la base de datos  
-     * @param mensaje
+     * @param user
+     * 
      * @throws InternalServerErrorException
      * @throws LogInDataException
      * @throws NoConnectionsAvailableException 
-     * @throws excepciones.UserNotActiveException 
+     * @throws UserNotActiveException 
+     * @throws ServerClosedException 
+     * 
+     * @return Los datos de login del usuario
      */
     @Override
-    public synchronized User signIn(Message mensaje) throws 
+    public synchronized User signIn(User user) throws 
             InternalServerErrorException, LogInDataException, 
-            NoConnectionsAvailableException, UserNotActiveException{
+            NoConnectionsAvailableException, UserNotActiveException, 
+            ServerClosedException{
         try {
             this.getConnection();
             
             //El select que recoge los datos si el email y contraseña coincide 
             stmt = con.prepareStatement(SELECT_SINGIN_RES_USER);
-            stmt.setString(1, mensaje.getUser().getEmail());
-            stmt.setString(2, mensaje.getUser().getPassword());
-            ResultSet rs = stmt.executeQuery();
+            stmt.setString(1, user.getEmail());
+            stmt.setString(2, user.getPassword());
+            ResultSet dbResult = stmt.executeQuery();
             
-            if(!rs.next()){
+            if(!dbResult.next()){
                 throw new LogInDataException();
             } else {
-                //mensaje.getUser().setName();
-                mensaje.getUser().setEmail(rs.getString("login"));
-                //mensaje.getUser().setCity();
-                mensaje.getUser().setCompany_id(rs.getInt("company_id"));
-                mensaje.getUser().setActive(rs.getBoolean("active"));
-                mensaje.getUser().setPassword(rs.getString("password"));
-                //mensaje.getUser().setStreet();
-                //mensaje.getUser().setZip();
-                if(!mensaje.getUser().isActive()) {
+                user.setEmail(dbResult.getString("login"));
+                user.setCompany_id(dbResult.getInt("company_id"));
+                user.setActive(dbResult.getBoolean("active"));
+                user.setPassword(dbResult.getString("password"));
+                if(!user.isActive()) {
                     throw new UserNotActiveException();
                 }
             }
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
-            throw new InternalServerErrorException();
-        } finally {
             releaseConnection();
+            throw new InternalServerErrorException();
         }
-        return mensaje.getUser();
+        releaseConnection();
+        return user;
     }
     
     /**
      * Registra el usuario, para ello hace un insert con todos los parametros 
      * que le pasan que le pasan
-     * @param mensaje
+     * @param user
+     * 
      * @throws InternalServerErrorException
      * @throws UserExitsException
-     * @throws NoConnectionsAvailableException 
+     * @throws NoConnectionsAvailableException
+     * @throws ServerClosedException
+     * 
+     * @return El usuario introducido
      */
     @Override
-    public synchronized User signUp(Message mensaje) throws 
+    public synchronized User signUp(User user) throws 
             InternalServerErrorException, UserExitsException, 
-            NoConnectionsAvailableException{
+            NoConnectionsAvailableException, ServerClosedException{
         try {
             this.getConnection();
             stmt = con.prepareStatement(SELECT_EMAIL);
-            stmt.setString(1, mensaje.getUser().getEmail());
+            stmt.setString(1, user.getEmail());
             ResultSet login = stmt.executeQuery();
             if(login.next()){
                 throw new UserExitsException();
             } else {
                 stmt = con.prepareStatement(INSERT_PARTNER);
-                stmt.setString(1, mensaje.getUser().getName());
-                stmt.setString(2, mensaje.getUser().getEmail());
-                stmt.setString(3, mensaje.getUser().getStreet());
-                stmt.setString(4, mensaje.getUser().getCity());
-                stmt.setString(5, mensaje.getUser().getZip());
+                stmt.setString(1, user.getName());
+                stmt.setString(2, user.getEmail());
+                stmt.setString(3, user.getStreet());
+                stmt.setString(4, user.getCity());
+                stmt.setString(5, user.getZip());
                 stmt.executeUpdate();
 
                 stmt = con.prepareStatement(SELECT_PARTNER_ID);
@@ -169,20 +178,19 @@ public class DbAccess implements Signable{
 
                 stmt = con.prepareStatement(INSERT_USERS);
                 stmt.setInt(1, partnerId);
-                stmt.setString(2, mensaje.getUser().getEmail());
-                stmt.setString(3, mensaje.getUser().getPassword());
-                stmt.setBoolean(4, mensaje.getUser().isActive());
+                stmt.setString(2, user.getEmail());
+                stmt.setString(3, user.getPassword());
+                stmt.setBoolean(4, user.isActive());
                 stmt.executeUpdate();
             }
 
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
-            throw new InternalServerErrorException();
-        } finally {
             releaseConnection();
+            throw new InternalServerErrorException();
         }
-
-        return mensaje.getUser();
+        releaseConnection();
+        return user;
     }
     
 }

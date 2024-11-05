@@ -8,13 +8,13 @@ package controler;
 /**
  * Clase Singleton para gestionar un pool de conexiones a la base de datos. 
  * La clase implementa un método estático que devuelve solo una instancia de 
- * {@link ConnectionPool}.
+ * un objeto {@link Closable}.
  * 
  * @author Adrian Rocha
  */
 public class ConnectionPoolSingleton {
     /**
-     * Objeto {@link ConnectionPool} para crear la instancia.
+     * Objeto {@link Closable} para crear la instancia.
      */
     private static Closable pool = null;
     
@@ -28,12 +28,12 @@ public class ConnectionPoolSingleton {
     /**
      * Obtiene la instancia única del pool de conexiones.
      * <p>
-     * Este método crea una nueva instancia de {@link ConnectionPool} si no 
+     * Este método crea una nueva instancia de {@link Closable} si no 
      * ha sido creada previamente. El método está sincronizado para garantizar
      * que la creación de la instancia sea segura en un entorno multi-hilo.
      * </p>
      * 
-     * @return instancia única del {@link ConnectionPool}
+     * @return instancia única del {@link Closable}
      */
     public synchronized static Closable getPool(){
         if (pool == null) {
