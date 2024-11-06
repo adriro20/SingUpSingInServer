@@ -97,10 +97,12 @@ public class Aplication {
                     }
                 } catch (IOException ex) {
                     log.log(Level.SEVERE, null, ex);
+                    closeServerConnection();
                 } catch (NoConnectionsAvailableException ex) {
                     log.log(Level.SEVERE, null, ex);
                     message.setRequest(Request.CONNECTIONS_EXCEPTION);
                     salida.writeObject(message);
+                    closeServerConnection();
                 } 
             }
         } catch (IOException ex) {
