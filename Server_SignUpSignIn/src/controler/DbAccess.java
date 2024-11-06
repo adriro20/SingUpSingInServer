@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class DbAccess implements Signable{
     /**Objeto utilizado para establecer una conexión con la base de datos.*/
-    private Connection con;
+    private Connection con = null;
     /**Objeto} utilizado para preparar y ejecutar consultas SQL con parametros.*/
     private PreparedStatement stmt;
     /**Objeto que almacena el resultado de una consulta SQL.*/
@@ -67,6 +67,9 @@ public class DbAccess implements Signable{
             this.con = ((ConnectionPool) connectionPool).getConnection();
         } catch (SQLException ex) {
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
+            if (con != null) {
+                releaseConnection();
+            }
             throw new InternalServerErrorException();
         }
     }
@@ -119,6 +122,7 @@ public class DbAccess implements Signable{
             ResultSet dbResult = stmt.executeQuery();
             
             if(!dbResult.next()){
+                releaseConnection();
                 throw new LogInDataException();
             } else {
                 user.setEmail(dbResult.getString("login"));
@@ -126,6 +130,7 @@ public class DbAccess implements Signable{
                 user.setActive(dbResult.getBoolean("active"));
                 user.setPassword(dbResult.getString("password"));
                 if(!user.isActive()) {
+                    releaseConnection();
                     throw new UserNotActiveException();
                 }
             }
@@ -160,6 +165,7 @@ public class DbAccess implements Signable{
             stmt.setString(1, user.getEmail());
             ResultSet login = stmt.executeQuery();
             if(login.next()){
+                releaseConnection();
                 throw new UserExitsException();
             } else {
                 stmt = con.prepareStatement(INSERT_PARTNER);

@@ -99,12 +99,14 @@ public class ConnectionPool implements Closable {
      */
     public synchronized Connection getConnection() throws NoConnectionsAvailableException, SQLException {
         Connection conn = null;
-
-        if (isFull()) {
-            throw new NoConnectionsAvailableException();
-        }
-
-        conn = getConnectionFromPool();
+        
+        if (isNotConnFree()) {
+            if (isFull()) {
+                throw new NoConnectionsAvailableException();
+            }
+        } else {
+            conn = getConnectionFromPool();
+        }  
 
         // Si no hay conexiones libres, crea una nueva.
         if (conn == null) {
@@ -122,7 +124,7 @@ public class ConnectionPool implements Closable {
      * 
      * @throws SQLException Si la conexión no pertenece al pool o ya ha sido devuelta.
      */
-    public synchronized void returnConnection(Connection conn) throws SQLException {
+    public synchronized void returnConnection(Connection conn) throws SQLException, NullPointerException {
         if (conn == null) {
             throw new NullPointerException();
         }
@@ -130,7 +132,6 @@ public class ConnectionPool implements Closable {
             throw new SQLException("La conexión ya ha sido devuelta o no pertenece a este pool.");
         }
         freePool.push(conn);
-        connNum--;
     }
 
     /**
@@ -139,7 +140,16 @@ public class ConnectionPool implements Closable {
      * @return {@code true} si el pool está lleno, {@code false} en caso contrario.
      */
     private synchronized boolean isFull() {
-        return ((freePool.size() == 0) && (connNum >= maxPoolSize));
+        return (connNum >= maxPoolSize);
+    }
+    
+    /**
+     * Verifica si no hay conexiones libres.
+     * 
+     * @return {@code true} si no hay conexiones libres.
+     */
+    private synchronized boolean isNotConnFree() {
+        return (freePool.isEmpty());
     }
 
     /**
