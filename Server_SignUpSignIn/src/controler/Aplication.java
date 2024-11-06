@@ -101,9 +101,7 @@ public class Aplication {
                     log.log(Level.SEVERE, null, ex);
                     message.setRequest(Request.CONNECTIONS_EXCEPTION);
                     salida.writeObject(message);
-                } finally {
-                    closeServerConnection();
-                }
+                } 
             }
         } catch (IOException ex) {
             log.log(Level.SEVERE, null, ex);

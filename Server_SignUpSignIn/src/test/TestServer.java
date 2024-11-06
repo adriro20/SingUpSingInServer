@@ -40,11 +40,11 @@ public class TestServer {
         try {
             User user = new User();
             user.setName("erlantz rey");
-            user.setEmail("sfdavwuitnhwiceuqwqxoewdasfh@gmail.com");
+            user.setEmail("xbxcvbncxvnxnxc@gmail.com");
             user.setCity("bilbao");
             user.setStreet("calle");
             user.setZip("48610");
-            user.setActive(false);
+            user.setActive(true);
             user.setPassword("ErlantZ9");
             Message mensaje = new Message();
             mensaje.setUser(user);
