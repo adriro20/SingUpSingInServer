@@ -160,7 +160,13 @@ public class DbAccess implements Signable{
             InternalServerErrorException, UserExitsException, 
             NoConnectionsAvailableException, ServerClosedException{
         try {
+            // Iniciamos la conexión
             this.getConnection();
+            
+            // Desactivar autocommit para manejar manualmente la transacción
+            con.setAutoCommit(false);
+
+            // Verificar si el usuario ya existe
             stmt = con.prepareStatement(SELECT_EMAIL);
             stmt.setString(1, user.getEmail());
             ResultSet login = stmt.executeQuery();
@@ -168,6 +174,7 @@ public class DbAccess implements Signable{
                 releaseConnection();
                 throw new UserExitsException();
             } else {
+                // Insertar el nuevo partner
                 stmt = con.prepareStatement(INSERT_PARTNER);
                 stmt.setString(1, user.getName());
                 stmt.setString(2, user.getEmail());
@@ -176,24 +183,48 @@ public class DbAccess implements Signable{
                 stmt.setString(5, user.getZip());
                 stmt.executeUpdate();
 
+                // Obtener el ID del partner recién creado
                 stmt = con.prepareStatement(SELECT_PARTNER_ID);
                 ResultSet partner = stmt.executeQuery();
                 int partnerId =0;
                 if (partner.next()) 
                      partnerId = partner.getInt("id");
 
+                // Insertar en la tabla de usuarios con el ID del partner
                 stmt = con.prepareStatement(INSERT_USERS);
                 stmt.setInt(1, partnerId);
                 stmt.setString(2, user.getEmail());
                 stmt.setString(3, user.getPassword());
                 stmt.setBoolean(4, user.isActive());
                 stmt.executeUpdate();
+                
+                // Confirmamos la transacción si todas las operaciones fueron 
+                //exitosas
+                con.commit();
             }
 
         } catch (SQLException ex) {
+            // Si ocurre un error, hacemos rollback para deshacer los cambios
+            if (con != null) {
+                try {
+                    con.rollback();
+                    System.err.println("Transacción revertida debido a un error.");
+                } catch (SQLException rollbackEx) {
+                    Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, rollbackEx);
+                }
+            }
             Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
             releaseConnection();
             throw new InternalServerErrorException();
+        } finally {
+            // Restaurar el autocommit a su estado original y liberar conexión
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(DbAccess.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }
         releaseConnection();
         return user;
