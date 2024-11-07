@@ -97,13 +97,13 @@ public class DbAccess implements Signable{
     /**
      * sirve para iniciar sesion para eso comprueba que los datos que 
      * le dan (message) estan en la base de datos  
-     * @param user
+     * @param user Usuario necesario para el inicio de sesion.
      * 
-     * @throws InternalServerErrorException
-     * @throws LogInDataException
-     * @throws NoConnectionsAvailableException 
-     * @throws UserNotActiveException 
-     * @throws ServerClosedException 
+     * @throws InternalServerErrorException Cualquier excepcion fuera de la libreria.
+     * @throws LogInDataException Excepcion de los datos de inicio de sesion.
+     * @throws NoConnectionsAvailableException Excepcion que salta cuando se supera el numero maximo de conexiones.
+     * @throws UserNotActiveException Excepcion de usuario inactivo.
+     * @throws ServerClosedException Excepcion de servidor apagado.
      * 
      * @return Los datos de login del usuario
      */
@@ -146,12 +146,12 @@ public class DbAccess implements Signable{
     /**
      * Registra el usuario, para ello hace un insert con todos los parametros 
      * que le pasan que le pasan
-     * @param user
+     * @param user Usuario necesario para el inicio de sesion.
      * 
-     * @throws InternalServerErrorException
-     * @throws UserExitsException
-     * @throws NoConnectionsAvailableException
-     * @throws ServerClosedException
+     * @throws InternalServerErrorException Cualquier excepcion fuera de la libreria.
+     * @throws UserExitsException Excepcion provocada cuando se intenta registrar usuario ya existente.
+     * @throws NoConnectionsAvailableException Excepcion que salta cuando se supera el numero maximo de conexiones.
+     * @throws ServerClosedException Excepcion de servidor apagado.
      * 
      * @return El usuario introducido
      */

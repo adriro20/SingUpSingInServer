@@ -94,8 +94,8 @@ public class ConnectionPool implements Closable {
      * 
      * @return Una conexión disponible.
      * 
-     * @throws NoConnectionsAvailableException
-     * @throws SQLException
+     * @throws NoConnectionsAvailableException No hay conexiones disponibles.
+     * @throws SQLException Excepción que salta cuando hay un error al recoger una conexion
      */
     public synchronized Connection getConnection() throws NoConnectionsAvailableException, SQLException {
         Connection conn = null;

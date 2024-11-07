@@ -33,7 +33,7 @@ import static controler.Aplication.closeServerConnection;
  * {@link SignableSingleton} para manejar las operaciones de base de datos.
  * </p>
  * 
- * @autor Adrian Rocha
+ * @author Adrian Rocha
  */
 public class Worker extends Thread{
     

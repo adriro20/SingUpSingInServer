@@ -30,7 +30,7 @@ import model.Worker;
  * de conexión.
  * </p>
  * 
- * @autor Adrian Rocha
+ * @author Adrian Rocha
  */
 public class Aplication {
     /** Número actual de conexiones activas al servidor. */
